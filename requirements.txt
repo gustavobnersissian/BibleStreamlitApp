@@ -5,3 +5,9 @@ matplotlib
 seaborn
 nltk
 string
+pandas
+plotly
+streamlit
+yfinance
+pandas-datareader
+prophet
