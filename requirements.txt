@@ -2,3 +2,4 @@ wordcloud
 streamlit
 pandas
 matplotlib
+seaborn
