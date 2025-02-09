@@ -6,6 +6,7 @@ import pandas as pd
 from wordcloud import WordCloud
 from collections import Counter
 import io
+from bs4 import BeautifulSoup  # Adicionado para remover tags HTML
 
 # Mapeamento das abreviações para os nomes completos dos livros
 livros_nomes = {
@@ -26,8 +27,17 @@ livros_nomes = {
     "2jo": "2 João", "3jo": "3 João", "jd": "Judas", "ap": "Apocalipse"
 }
 
-# Lista de stop words
-stop_words = {"a", "o", "e", "que", "de", "do", "da", "dos", "das", "em", "para", "por"}
+# Lista de stop words para remover palavras irrelevantes
+stop_words = set(["a", "o", "e", "que", "de", "do", "da", "dos", "das",
+                  "em", "para", "por", "com", "não", "uma", "como", "se",
+                  "mas", "ou", "ao", "às", "os", "as", "isso", "este",
+                  "ele", "ela", "eles", "elas", "porque", "porém", "sua", "suas",
+                  "seu", "seus", "deu", "lhe", "um", "é", "são", "tu","se", "meu",
+                  "nos", "todos", "aos", "na", "deu", "se", "à", "lo", "lhe", "deu",
+                  "até", "foi", "você", "se", "lhe", "deu", "quem", "então", "os", "as",
+                  "um", "com" "se", "no", "sua","seu", "'", "me", "lhes","pois","sem", "está",
+                  "vocês", "eu","quando","nem","alguém","—","minha","vocês,", "estão", "senhor,"])
+
 
 @st.cache_data
 def load_biblia():
@@ -37,6 +47,11 @@ def load_biblia():
 def contar_palavras(texto):
     palavras = texto.split()
     return [palavra.lower() for palavra in palavras if palavra.lower() not in stop_words]
+
+# Função para remover tags HTML
+def remover_tags_html(texto):
+    soup = BeautifulSoup(texto, "html.parser")
+    return soup.get_text()
 
 # Carregar os dados da Bíblia
 biblia_data = load_biblia()
@@ -79,22 +94,25 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# Limpar o texto antes de gerar a nuvem de palavras
+texto_limpo = remover_tags_html(texto_completo)
+
 # Estatísticas
 total_palavras_biblia = sum(len(contar_palavras(" ".join(cap))) for livro in biblia_data for cap in livro["chapters"])
-palavras_livro = len(contar_palavras(texto_completo))
+palavras_livro = len(contar_palavras(texto_limpo))
 percentual = (palavras_livro / total_palavras_biblia) * 100
 st.write(f"📊 O livro {livros_nomes[livro_escolhido]} representa {percentual:.2f}% do total de palavras da Bíblia.")
 
 # Gráficos
 st.write("### Nuvem de Palavras")
-wordcloud = WordCloud(width=800, height=400, background_color='white').generate(" ".join(contar_palavras(texto_completo)))
+wordcloud = WordCloud(width=800, height=400, background_color='white').generate(" ".join(contar_palavras(texto_limpo)))
 plt.figure(figsize=(10, 5))
 plt.imshow(wordcloud, interpolation="bilinear")
 plt.axis("off")
 st.pyplot(plt)
 
 st.write("### Distribuição de Palavras")
-df = pd.DataFrame(Counter(contar_palavras(texto_completo)).most_common(15), columns=['Palavra', 'Frequência'])
+df = pd.DataFrame(Counter(contar_palavras(texto_limpo)).most_common(15), columns=['Palavra', 'Frequência'])
 plt.figure(figsize=(8, 5))
 sns.barplot(x='Frequência', y='Palavra', data=df, palette='viridis')
 st.pyplot(plt)

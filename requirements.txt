@@ -2,3 +2,5 @@ wordcloud
 streamlit
 pandas
 matplotlib
+seaborn
+beautifulsoup
